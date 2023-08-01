@@ -6,12 +6,14 @@ date_formatter <- function(dates, abbr_day = TRUE, abbr_month = TRUE, include_ye
                            dayy %% 10 == 1 ~ 'st',
                            dayy %% 10 == 2 ~ 'nd',
                            dayy %% 10 == 3 ~'rd',
-                          TRUE ~ "th")
+                           TRUE ~ "th")
   
   if(include_year == FALSE){
     paste0(lubridate::wday(dates, label = TRUE, abbr = abbr_day), " ", dayy, suff, " ", lubridate::month(dates, label = TRUE, abbr = abbr_month))
   }
-
+  else(
+    paste0(lubridate::wday(dates, label = TRUE, abbr = abbr_day), " ", dayy, suff, " ", lubridate::month(dates, label = TRUE, abbr = abbr_month), " ", lubridate::year(dates))
+  )
 }
 
 ##Function to find a value that is neither the max nor the min
@@ -34,9 +36,15 @@ hourly_diff <- function(data, hour_1, hour_2){
   
   ##Filter data to just those dates and the hours given
   compare <- data[date %in% c(md, mx) & hour >= hour_1 & hour < hour_2, 
-  ##Summarise by date to add all volumes together                
+                  ##Summarise by date to add all volumes together                
                   .(count = sum(count, na.rm = TRUE)),
-                    by = list(date)]
+                  by = list(date)]
+  
+  ##Find change from last week to this week
+  change <- round(
+    (
+      (compare[date == mx, count]/compare[date == md, count]) - 1) 
+    * 100)
   
   #~Format as percentage with positive or negative sign
   if(hour_1 == 00 & hour_2 == 24){
@@ -45,7 +53,7 @@ hourly_diff <- function(data, hour_1, hour_2){
   else if(hour_2 == 24){
     paste0("from ", hour_format(hour_1), " onwards "," (", sprintf("%+2g%%", change),")")
   }else{
-  paste0("between ", hour_format(hour_1), " - ", hour_format(hour_2), " (", sprintf("%+2g%%", change),")")
+    paste0("between ", hour_format(hour_1), " - ", hour_format(hour_2), " (", sprintf("%+2g%%", change),")")
   }
 }
 
@@ -62,6 +70,16 @@ hour_format <- function(x){
   paste(hour, mins, sep = ":")
 }
 
+#Find most recent percentage value
+current_percent <- function(transport_mode){
+  
+  data <- all_data %>%
+    dplyr::filter(transport_type == transport_mode) %>%
+    dplyr::filter(date == max(date, na.rm = TRUE))
+  
+  scales::percent(data$dash_value)
+  
+}
 
 #Find most recent percentage value
 comparison_percent <- function(transport_mode, days_diff = 7){
@@ -173,7 +191,7 @@ date_cycling <- function(format = "full_month"){
   if(format == "full_month"){
     
     paste0(date_formatter(min(data$date, na.rm = TRUE), abbr_day = FALSE, abbr_month = FALSE), " and ", date_formatter(max(data$date, na.rm = TRUE), abbr_day = FALSE, abbr_month = FALSE))
-  }else{
+  } else{
     paste0(date_formatter(min(data$date, na.rm = TRUE)), " - ", date_formatter(max(data$date, na.rm = TRUE)))
     
   }
