@@ -173,7 +173,7 @@ date_cycling <- function(format = "full_month"){
   if(format == "full_month"){
     
     paste0(date_formatter(min(data$date, na.rm = TRUE), abbr_day = FALSE, abbr_month = FALSE), " and ", date_formatter(max(data$date, na.rm = TRUE), abbr_day = FALSE, abbr_month = FALSE))
-  }else{
+  } else{
     paste0(date_formatter(min(data$date, na.rm = TRUE)), " - ", date_formatter(max(data$date, na.rm = TRUE)))
     
   }
